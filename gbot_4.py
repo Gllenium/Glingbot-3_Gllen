@@ -1,7 +1,10 @@
 from pydoc import describe
 import discord,re,ast,asyncio,os,calendar,datetime
+from discord.ext import commands
 
-bot = discord.Bot(command_prefix='>')
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(intents=intents)
 token = open("token.txt",'r+').readline()
 premium_=[]
 premium=[]
@@ -15,7 +18,7 @@ for i in premium_:
     premium.append(int(i))
 
 
-
+#openAI chatGPT setup
 import openai
 
 openai.api_key = open("openaitoken.txt",'r').readline()
@@ -28,7 +31,7 @@ async def on_ready():
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
     await bot.change_presence(status=discord.Status.dnd)
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Gllen 3.1.0 : SSH 24h server"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Gllen 3.1.1 : SSH 24h server"))
 
 
 
@@ -178,9 +181,11 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
 
             if isinstance(body[-1], ast.With):
                 insert_returns(body[-1].body)
+
         print(code,ctx.author)
         cmd = code.split(" ")
         _cmd = cmd
+
         msg = await ctx.respond(embed = discord.Embed(title='Code Compiling').add_field(
             name='📥 Input',
             value=f'```py\n{cmd}```',
@@ -255,5 +260,37 @@ async def ai(ctx, message: discord.commands.Option(str, "AI에게 적을 메세�
         embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
         embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
         await msg.edit_original_message(embed=embed)
+
+"""prefix_command"""
+
+@bot.event
+async def on_message(ctx):
+    if ctx.content.startswith("ㄱ"):
+        eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
+        embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
+        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[1:]}```", inline=False)
+        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
+        embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)
+        msg=await ctx.reply(embed=embed,mention_author=False)
+        try:
+            response = await openai.Completion.acreate(
+                engine=eng,
+                prompt=ctx.content[1:],
+                max_tokens=2048,
+                top_p=0.1,
+                stop=None,
+                temperature=0.1,
+            )
+            resp=response.get("choices")[0].text
+            '''embed=discord.Embed(title="ChatGPT AI", description="engine : {}".format(eng), colour=discord.Colour.green())
+            embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n'{message}'```", inline=False)
+            embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```\n{resp}```", inline=False)
+            embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)'''
+            await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[1:],resp))
+        except Exception as e:
+            embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
+            embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+            await msg.edit(embed=embed)
+
 
 bot.run(token) # Bot Running Code
