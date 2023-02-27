@@ -60,21 +60,6 @@ async def 캘린더(ctx):
         embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
     await ctx.respond(embed=embed)
 
-
-@bot.slash_command(description="자신의 프사 출력")
-async def 내프사(ctx):
-    global premium
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="프로필 사진", description='{}님의 프로필 사진입니다.'.format(ctx.author), color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-        embed.set_image(url=ctx.author.avatar)
-    else:
-        embed = discord.Embed(title="프로필 사진", description='{}님의 프로필 사진입니다.'.format(ctx.author), color=0x00FF80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author)
-        embed.set_image(url=ctx.author.avatar)
-    await ctx.respond(embed=embed)
-
-
 @bot.slash_command(description="지정한 사람의 프사 출력")
 async def 프사(ctx, id_또는_mention: discord.commands.Option(str, "id or @mention")):
     global premium
@@ -194,7 +179,7 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
         await asyncio.sleep(1)
 
         #banword checking
-        banword = ['token', 'file=', 'file =']
+        banword = ['token', 'file=', 'file =', 'exit', 'api_key']
 
         if cmd in banword:
             embed = discord.Embed(title='Code Compiling')
@@ -265,6 +250,35 @@ async def ai(ctx, message: discord.commands.Option(str, "AI에게 적을 메세�
 
 @bot.event
 async def on_message(ctx):
+    if ctx.content.startswith("ㄱ "):
+        eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
+        embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
+        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[2:]}```", inline=False)
+        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
+        embed.set_footer(text=str(ctx.author)+"(none-avatar)")
+        msg=await ctx.reply(embed=embed,mention_author=False)
+        try:
+            response = await openai.Completion.acreate(
+                engine=eng,
+                prompt=ctx.content[2:],
+                max_tokens=2048,
+                top_p=0.1,
+                stop=None,
+                temperature=0.1,
+            )
+            resp=response.get("choices")[0].text
+            '''embed=discord.Embed(title="ChatGPT AI", description="engine : {}".format(eng), colour=discord.Colour.green())
+            embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n'{message}'```", inline=False)
+            embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```\n{resp}```", inline=False)
+            embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)'''
+            await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[1:],resp))
+        except Exception as e:
+            embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
+            embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+            await msg.edit(embed=embed)
+        return
+
+
     if ctx.content.startswith("ㄱ"):
         eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
         embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
@@ -291,6 +305,8 @@ async def on_message(ctx):
             embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
             embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
             await msg.edit(embed=embed)
+
+
 
 
 bot.run(token) # Bot Running Code
