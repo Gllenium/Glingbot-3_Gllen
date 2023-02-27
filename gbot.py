@@ -169,7 +169,6 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
 
         print(code,ctx.author)
         cmd = code.split(" ")
-        _cmd = cmd
 
         msg = await ctx.respond(embed = discord.Embed(title='Code Compiling').add_field(
             name='📥 Input',
@@ -179,14 +178,14 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
         await asyncio.sleep(1)
 
         #banword checking
-        banword = ['token', 'file=', 'file =', 'exit', 'api_key']
+        banword = ['token', 'file=', 'file =', 'exit()', 'api_key']
 
-        if cmd in banword:
+        if code in banword:
             embed = discord.Embed(title='Code Compiling')
-            embed.add_field(name='📥 Input', value=f'```py\n{_cmd}```', inline=False)
-            embed.add_field(name = '📤 Output', value = f'`{cmd}`에는 eval에서 사용 금지된 단어가 포함되어 있습니다.')
+            embed.add_field(name='📥 Input', value=f'```py\n{code}```', inline=False)
+            embed.add_field(name = '📤 Output', value = f'`{cmd}`에는 jsk에서 사용 금지된 단어가 포함되어 있습니다.')
             await msg.edit_original_message(embed=embed)
-            await ctx.respond(f'{code}는 사용 금지된 단어가 포함되어 있습니다.',ephemeral=True)
+            await ctx.respond(f'"{code}"는 사용 금지된 단어가 포함되어 있습니다.',ephemeral=True)
             return None
         else:
             try:
@@ -305,6 +304,7 @@ async def on_message(ctx):
             embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
             embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
             await msg.edit(embed=embed)
+
 
 
 
