@@ -23,6 +23,38 @@ import openai
 
 openai.api_key = open("openaitoken.txt",'r').readline()
 
+async def bt(games):
+    await bot.wait_until_ready()
+
+    while not bot.is_closed():
+        for g in games:
+            await bot.change_presence(status = discord.Status.online, activity = discord.Game(g))
+            await asyncio.sleep(10)
+
+async def check_em(ctx,embed):
+    if int(ctx.author.id) in premium:
+        embed.color=0xD358F7
+        if ctx.author.avatar!=None:
+            embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
+        else:
+            embed.set_footer(text='{} (premium)'.format(ctx.author))
+        return embed
+    else:
+        if ctx.author.avatar!=None:
+            embed.set_footer(icon_url=ctx.author.avatar, text='{})'.format(ctx.author))
+        else:
+            embed.set_footer(text='{}'.format(ctx.author))
+        return embed
+
+
+
+async def check(ctx):
+    if int(ctx.author.id) in premium:
+        return True
+    else:
+        return False
+        
+
 
 @bot.event
 async def on_ready():
@@ -30,8 +62,7 @@ async def on_ready():
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bot.change_presence(status=discord.Status.dnd)
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Gllen 3.1.1 : SSH 24h server"))
+    await bt(['Gllen 3.1.3', 'SSH 24h Server', 'AI Update', 'Avatar Error Hotfix'])
 
 
 
@@ -39,12 +70,8 @@ async def on_ready():
 async def 핑(ctx):
     global premium
     pong=str(round(bot.latency*1000))
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="Ping", description=pong + ' ms', color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-    else:
-        embed = discord.Embed(title="Ping", description=pong + ' ms', color=0x00FF80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
+    embed = discord.Embed(title="Ping", description=pong + ' ms')
+    embed=await check_em(ctx,embed)
     await ctx.respond(embed=embed)
 
 
@@ -52,12 +79,8 @@ async def 핑(ctx):
 async def 캘린더(ctx):
     global premium
     dt=datetime.datetime.now()
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="calendar", description="```py\n{}```".format(calendar.month(dt.year,dt.month)), color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-    else:
-        embed = discord.Embed(title="calendar", description="```py\n{}```".format(calendar.month(dt.year,dt.month)), color=0x00FF80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
+    embed = discord.Embed(title="calendar", description="```py\n{}```".format(calendar.month(dt.year,dt.month)))
+    embed=await check_em(ctx,embed)
     await ctx.respond(embed=embed)
 
 @bot.slash_command(description="지정한 사람의 프사 출력")
@@ -69,14 +92,12 @@ async def 프사(ctx, id_또는_mention: discord.commands.Option(str, "id or @me
     except:
         await ctx.respond("존재하지 않는 id입니다.",ephemeral=True)
         return
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="프로필 사진", description='{}님의 프로필 사진입니다.'.format(f_user), color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-        embed.set_image(url=f_user.avatar)
-    else:
-        embed = discord.Embed(title="프로필 사진", description='{}님의 프로필 사진입니다.'.format(f_user), color=0x00FF80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author)
-        embed.set_image(url=f_user.avatar)
+    embed = discord.Embed(title="프로필 사진", description='{}님의 프로필 사진입니다.'.format(f_user))
+    embed=await check_em(ctx,embed)
+    if f_user.avatar==None:
+        await ctx.respond("프로필 사진이 없습니다.")
+        return
+    embed.set_image(url=f_user.avatar)
     await ctx.respond(embed=embed)
 
 
@@ -89,13 +110,10 @@ async def 정보(ctx, id_또는_mention: discord.commands.Option(str, "id or @me
     except:
         await ctx.respond("존재하지 않는 id입니다.",ephemeral=True)
         return
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="유저 정보", description="`{}`님의 정보입니다.".format(f_user.name), color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-    else:
-        embed = discord.Embed(title="유저 정보", description="`{}`님의 정보입니다.".format(f_user.name), color=0x00ff80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
-    embed.set_thumbnail(url=f_user.avatar)
+    embed = discord.Embed(title="유저 정보", description="`{}`님의 정보입니다.".format(f_user.name))
+    embed=await check_em(ctx,embed)
+    if ctx.author.avatar!=None:
+        embed.set_thumbnail(url=f_user.avatar)
     embed.add_field(name="이름(+태그)", value=f_user, inline=True)
     embed.add_field(name="계정 생성 시간", value=str(f_user.created_at), inline=True)
     if sp in premium:
@@ -112,23 +130,20 @@ async def 삭제(ctx, 수 : discord.commands.Option(int, "삭제할 메세지 �
         await ctx.respond("메세지 관리 권한이 없습니다.",ephemeral=True)
         return
     sp=수
-    embee = discord.Embed(title="메세지를 삭제하는 중입니다.", description="삭제하는 메세지 : {}개".format(sp), color=0xD358F7)
+    embee = discord.Embed(title="메세지를 삭제하는 중입니다.", description="삭제하는 메세지 : {}개".format(sp))
+    embee=await check_em(ctx,embee)
     await ctx.respond(embed=embee,ephemeral=True)
     await ctx.channel.purge(limit=sp,bulk=True)
-    if int(ctx.author.id) in premium:
-        embed = discord.Embed(title="메세지 삭제를 성공적으로 마쳤습니다.", description="삭제된 메세지 : {}개".format(sp), color=0xD358F7)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (premium)'.format(ctx.author))
-    else:
-        embed = discord.Embed(title="메세지 삭제를 성공적으로 마쳤습니다.", description="삭제된 메세지 : {}개".format(sp), color=0x00ff80)
-        embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
+    embed = discord.Embed(title="메세지 삭제를 성공적으로 마쳤습니다.", description="삭제된 메세지 : {}개".format(sp))
+    embed=await check_em(ctx,embed)
     await ctx.respond(embed=embed)
 
 
 @bot.slash_command(description="임베드 생성")
 async def 임베드(ctx,title:discord.commands.Option(str, "타이틀(제목)"),description:discord.commands.Option(str, "소제목"),fieldname:discord.commands.Option(str, "내용 제목"),fieldvalue:discord.commands.Option(str, "내용")):
     global premium
-    embed = discord.Embed(title=title, description=description, color=0xD358F7)
-    embed.set_footer(icon_url=ctx.author.avatar, text=ctx.author.name)
+    embed = discord.Embed(title=title, description=description)
+    embed=await check_em(ctx,embed)
     embed.add_field(name=fieldname, value=fieldvalue, inline=True)
     await ctx.respond(embed=embed)
 
@@ -210,7 +225,7 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
                 embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n{ccode}```", inline=False)
                 embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```py\n{result}```", inline=False)
                 embed.add_field(name="`🔧 Type (타입) 🔧`",value=f"```py\n{type(result)}```", inline=False)
-                embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)
+                embed=await check_em(ctx,embed)
                 await msg.edit_original_message(embed = embed)
             except Exception as e:
                 await ctx.respond(f"실행 중 오류가 발생하였습니다.\n\n```py\n{e}```",ephemeral=True)
@@ -223,7 +238,7 @@ async def ai(ctx, message: discord.commands.Option(str, "AI에게 적을 메세�
     embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
     embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{message}```", inline=False)
     embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
-    embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)
+    embed=await check_em(ctx,embed)
     msg=await ctx.respond(embed=embed)
     try:
         response = await openai.Completion.acreate(
@@ -243,47 +258,19 @@ async def ai(ctx, message: discord.commands.Option(str, "AI에게 적을 메세�
     except Exception as e:
         embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
         embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+        embed=await check_em(ctx,embed)
         await msg.edit_original_message(embed=embed)
 
 """prefix_command"""
 
 @bot.event
 async def on_message(ctx):
-    if ctx.content.startswith("ㄱ "):
-        eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
-        embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
-        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[2:]}```", inline=False)
-        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
-        embed.set_footer(text=str(ctx.author)+"(none-avatar)")
-        msg=await ctx.reply(embed=embed,mention_author=False)
-        try:
-            response = await openai.Completion.acreate(
-                engine=eng,
-                prompt=ctx.content[2:],
-                max_tokens=2048,
-                top_p=0.1,
-                stop=None,
-                temperature=0.1,
-            )
-            resp=response.get("choices")[0].text
-            '''embed=discord.Embed(title="ChatGPT AI", description="engine : {}".format(eng), colour=discord.Colour.green())
-            embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n'{message}'```", inline=False)
-            embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```\n{resp}```", inline=False)
-            embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)'''
-            await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[1:],resp))
-        except Exception as e:
-            embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
-            embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
-            await msg.edit(embed=embed)
-        return
-
-
     if ctx.content.startswith("ㄱ"):
         eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
         embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
         embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[1:]}```", inline=False)
         embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
-        embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)
+        embed=await check_em(ctx,embed)
         msg=await ctx.reply(embed=embed,mention_author=False)
         try:
             response = await openai.Completion.acreate(
