@@ -62,7 +62,7 @@ async def on_ready():
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bt(['Gllen 3.1.3', 'SSH 24h Server', 'AI Update', 'Avatar Error Hotfix'])
+    await bt(['Gllen 3.1.4', 'SSH 24h Server', 'ChatGPT 3.5 Update', 'AI Image Uadate'])
 
 
 
@@ -166,7 +166,10 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
         h=await bot.fetch_user(sp)
         embed = discord.Embed(title="성공", description="`{}`님을 프리미엄 멤버 리스트에 추가합니다.".format(h,sp), color=0xD358F7)
         embed.add_field(name=f"Gllen의 {len(premium)}번째 프리미엄 소유자입니다.", value=f"ID : {sp}", inline=False)
-        embed.set_footer(icon_url=ctx.author.avatar, text='{} (봇 소유자)'.format(ctx.author))
+        if ctx.author.avatar!=None:
+            embed.set_footer(icon_url=ctx.author.avatar, text='{} (봇 소유자)'.format(ctx.author))
+        else:
+            embed.set_footer(text='{} (봇 소유자)'.format(ctx.author))
         await ctx.respond(embed=embed)
         return
     if int(ctx.author.id) in premium:
@@ -232,65 +235,111 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
     else:
         await ctx.respond("프리미엄이 아닙니다.",ephemeral=True)
 
-@bot.slash_command(description="테스트 기능")
-async def ai(ctx, message: discord.commands.Option(str, "AI에게 적을 메세지")):
-    eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
-    embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
+@bot.slash_command(description="ChatGPT를 이용한 AI기능")
+async def ask(ctx, message: discord.commands.Option(str, "AI에게 적을 메세지")):
+    eng="gpt-3.5-turbo" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
+    embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="ChatGPT가 생각하는 중입니다...", colour=discord.Colour.green())
     embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{message}```", inline=False)
-    embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
+    embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT 3.5)".format(eng), inline=False)
     embed=await check_em(ctx,embed)
-    msg=await ctx.respond(embed=embed)
+    msg=await ctx.reply(embed=embed,mention_author=False)
+    messages=[
+        {"role": "user", "content": message}
+        ]
     try:
-        response = await openai.Completion.acreate(
-            engine=eng,
-            prompt=message,
+        response = await openai.ChatCompletion.acreate(
+            model=eng,
             max_tokens=2048,
             top_p=0.1,
             stop=None,
-            temperature=0.1,
-        )
-        resp=response.get("choices")[0].text
-        '''embed=discord.Embed(title="ChatGPT AI", description="engine : {}".format(eng), colour=discord.Colour.green())
-        embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n'{message}'```", inline=False)
-        embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```\n{resp}```", inline=False)
-        embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)'''
+            messages=messages,
+            temperature=0.1)
+        resp=response.get("choices")[0]['message']['content']
         await msg.edit_original_message(embed=None,content="```\n>>> {}\n{}```".format(message,resp))
     except Exception as e:
         embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
         embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+        await msg.edit_original_message(embed=embed)
+
+@bot.slash_command(description="DALL·E를 이용한 AI기능")
+async def 그림(ctx, prompt: discord.commands.Option(str, "주제, ','로 구분하여 작성")):
+    embed=discord.Embed(title="<a:loading:1076164295898959982>DALL·E Image AI<a:loading:1076164295898959982>", description="AI가 그리는 중입니다...", colour=discord.Colour.green())
+    embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{prompt}```", inline=False)
+    embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="```fix\nDALL·E```", inline=False)
+    embed=await check_em(ctx,embed)
+    msg=await ctx.respond(embed=embed)
+    try:
+        response = await openai.Image.acreate(
+        prompt=prompt,
+        n=1,
+        size="1024x1024"
+        )
+        image_url = response['data'][0]['url']
+        embed=discord.Embed(title="DALL·E Image AI", description="prompt : `{}`".format(prompt), colour=discord.Colour.green())
+        embed.set_image(url=image_url)
         embed=await check_em(ctx,embed)
         await msg.edit_original_message(embed=embed)
+    except Exception as e:
+        embed=discord.Embed(title="<a:error:1076170456740143135> DALL·E Image AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 요청해주세요!", colour=discord.Colour.red())
+        embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+        embed=await check_em(ctx,embed)
+        await msg.edit_original_message(embed=embed)
+
 
 """prefix_command"""
 
 @bot.event
 async def on_message(ctx):
-    if ctx.content.startswith("ㄱ"):
-        eng="text-davinci-003" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
-        embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="AI가 생각하는 중입니다...\n시간 초과로 응답이 나오지 않을 수 있습니다.", colour=discord.Colour.green())
-        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[1:]}```", inline=False)
-        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT)".format(eng), inline=False)
+    if ctx.content.startswith("ㄱㄹ "):
+        embed=discord.Embed(title="<a:loading:1076164295898959982>DALL·E Image AI<a:loading:1076164295898959982>", description="AI가 그리는 중입니다...", colour=discord.Colour.green())
+        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[3:]}```", inline=False)
+        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="```fix\nDALL·E```", inline=False)
+        embed=await check_em(ctx,embed)
+        msg=await ctx.reply(embed=embed)
+        try:
+            response = await openai.Image.acreate(
+            prompt=ctx.content[3:],
+            n=1,
+            size="1024x1024"
+            )
+            image_url = response['data'][0]['url']
+            embed=discord.Embed(title="DALL·E Image AI", description="prompt : `{}`".format(ctx.content[3:]), colour=discord.Colour.green())
+            embed.set_image(url=image_url)
+            embed=await check_em(ctx,embed)
+            await msg.edit(embed=embed)
+            return
+        except Exception as e:
+            embed=discord.Embed(title="<a:error:1076170456740143135> DALL·E Image AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 요청해주세요!", colour=discord.Colour.red())
+            embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+            embed=await check_em(ctx,embed)
+            await msg.edit(embed=embed)
+            return
+
+    if ctx.content.startswith("ㄱ "):
+        eng="gpt-3.5-turbo" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
+        embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="ChatGPT가 생각하는 중입니다...", colour=discord.Colour.green())
+        embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[2:]}```", inline=False)
+        embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT 3.5)".format(eng), inline=False)
         embed=await check_em(ctx,embed)
         msg=await ctx.reply(embed=embed,mention_author=False)
+        messages=[
+            {"role": "user", "content": ctx.content[2:]}
+            ]
         try:
-            response = await openai.Completion.acreate(
-                engine=eng,
-                prompt=ctx.content[1:],
+            response = await openai.ChatCompletion.acreate(
+                model=eng,
                 max_tokens=2048,
                 top_p=0.1,
                 stop=None,
-                temperature=0.1,
-            )
-            resp=response.get("choices")[0].text
-            '''embed=discord.Embed(title="ChatGPT AI", description="engine : {}".format(eng), colour=discord.Colour.green())
-            embed.add_field(name="`📥 Input (들어가는 내용) 📥`", value=f"```py\n'{message}'```", inline=False)
-            embed.add_field(name="`📤 Output (나오는 내용) 📤`", value=f"```\n{resp}```", inline=False)
-            embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar)'''
-            await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[1:],resp))
+                messages=messages,
+                temperature=0.1)
+            resp=response.get("choices")[0]['message']['content']
+            await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[2:],resp))
         except Exception as e:
             embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
             embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
             await msg.edit(embed=embed)
+
 
 
 
