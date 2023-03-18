@@ -1,13 +1,14 @@
 from pydoc import describe
-import discord,re,ast,asyncio,os,calendar,datetime
+import discord,re,ast,asyncio,os,calendar,datetime,time
 from discord.ext import commands
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(intents=intents)
+bot = commands.Bot(intents=intents,command_prefix="ㄱ ")
 token = open("token.txt",'r+').readline()
 premium_=[]
 premium=[]
+version="3.1.5"
 
 f = open("premium.txt", 'r+')
 pr = f.readline()
@@ -17,6 +18,7 @@ del premium_[-1]
 for i in premium_:
     premium.append(int(i))
 
+bot_start_time=time.time()
 
 #openAI chatGPT setup
 import openai
@@ -41,7 +43,7 @@ async def check_em(ctx,embed):
         return embed
     else:
         if ctx.author.avatar!=None:
-            embed.set_footer(icon_url=ctx.author.avatar, text='{})'.format(ctx.author))
+            embed.set_footer(icon_url=ctx.author.avatar, text='{}'.format(ctx.author))
         else:
             embed.set_footer(text='{}'.format(ctx.author))
         return embed
@@ -58,11 +60,11 @@ async def check(ctx):
 
 @bot.event
 async def on_ready():
-    os.system('echo \033[32mGllen Online\033[0m')
+    os.system('echo \033[32mGllen {} Online\033[0m'.format(version))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bt(['Gllen 3.1.4', 'SSH 24h Server', 'ChatGPT 3.5 Update', 'AI Image Uadate'])
+    await bt(['Gllen {}'.format(version), 'SSH 24h Server', 'ChatGPT 3.5 Update', 'AI Image Uadate'])
 
 
 
@@ -112,7 +114,7 @@ async def 정보(ctx, id_또는_mention: discord.commands.Option(str, "id or @me
         return
     embed = discord.Embed(title="유저 정보", description="`{}`님의 정보입니다.".format(f_user.name))
     embed=await check_em(ctx,embed)
-    if ctx.author.avatar!=None:
+    if f_user.avatar!=None:
         embed.set_thumbnail(url=f_user.avatar)
     embed.add_field(name="이름(+태그)", value=f_user, inline=True)
     embed.add_field(name="계정 생성 시간", value=str(f_user.created_at), inline=True)
@@ -120,6 +122,18 @@ async def 정보(ctx, id_또는_mention: discord.commands.Option(str, "id or @me
         embed.add_field(name="GlingBot Premium", value="```fix\nPremium 사용중\n```", inline=False)
     else:
         embed.add_field(name="GlingBot Premium", value="```\nPremium 사용중이지 않음```\n", inline=False)
+    await ctx.respond(embed=embed)
+
+
+@bot.slash_command(description="봇의 정보를 출력")
+async def 봇(ctx):
+    global premium
+    embed = discord.Embed(title="Bot Information", description="봇 <:Gllen:1086672769409888436>`Gllen`의 정보입니다.")
+    embed=await check_em(ctx,embed)
+    embed.set_thumbnail(url=(await bot.fetch_user(803176376240701460)).avatar)
+    embed.add_field(name="`Gllen {}`".format(version), value="```ansi\n\033[32mGlingBot Project 3 : Gllen\033[0m```", inline=False)
+    embed.add_field(name="Gllen Developer", value="```ansi\n\033[35mGllenium ㅣ 글링이#3333\033[0m```", inline=True)
+    embed.add_field(name="Gllen Server Uptime", value="```ansi\n\033[33m{}\033[0m```".format(((str(datetime.timedelta(seconds=int(time.time()-bot_start_time)))).split("."))[0]), inline=False)
     await ctx.respond(embed=embed)
 
 
@@ -185,12 +199,12 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
             if isinstance(body[-1], ast.With):
                 insert_returns(body[-1].body)
 
-        print(code,ctx.author)
+        print("\n{}\n{}\n".format(code,ctx.author))
         cmd = code.split(" ")
 
-        msg = await ctx.respond(embed = discord.Embed(title='Code Compiling').add_field(
+        msg = await ctx.respond(embed = discord.Embed(title='Code Compiling <a:loading:1076164295898959982>').add_field(
             name='📥 Input',
-            value=f'```py\n{cmd}```',
+            value=f'```py\n{code}```',
             inline=False
         ))#,ephemeral=True
         await asyncio.sleep(1)
@@ -231,7 +245,7 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
                 embed=await check_em(ctx,embed)
                 await msg.edit_original_message(embed = embed)
             except Exception as e:
-                await ctx.respond(f"실행 중 오류가 발생하였습니다.\n\n```py\n{e}```",ephemeral=True)
+                await msg.edit_original_message(embed = None, content = f"실행 중 오류가 발생하였습니다.\n\n```py\n{e}```")
     else:
         await ctx.respond("프리미엄이 아닙니다.",ephemeral=True)
 
@@ -242,7 +256,7 @@ async def ask(ctx, message: discord.commands.Option(str, "AI에게 적을 메세
     embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{message}```", inline=False)
     embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT 3.5)".format(eng), inline=False)
     embed=await check_em(ctx,embed)
-    msg=await ctx.reply(embed=embed,mention_author=False)
+    msg=await ctx.respond(embed=embed)
     messages=[
         {"role": "user", "content": message}
         ]
