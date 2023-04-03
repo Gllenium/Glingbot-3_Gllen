@@ -64,7 +64,7 @@ async def on_ready():
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bt(['Gllen {}'.format(version), 'SSH 24h Server', 'ChatGPT 3.5 Update', 'AI Image Uadate'])
+    await bt(['Gllen {}'.format(version), 'SSH 24h Server', "Added '/봇' function"])
 
 
 
@@ -178,12 +178,13 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
         f.close()
         premium.append(sp)
         h=await bot.fetch_user(sp)
-        embed = discord.Embed(title="성공", description="`{}`님을 프리미엄 멤버 리스트에 추가합니다.".format(h,sp), color=0xD358F7)
-        embed.add_field(name=f"Gllen의 {len(premium)}번째 프리미엄 소유자입니다.", value=f"ID : {sp}", inline=False)
+        embed = discord.Embed(title="Gllen Premium : Register", description="<:Gllen:1086672769409888436>Gllen Premium User List에 등록합니다.", color=0xD358F7)
+        embed.add_field(name=f"User Information", value=f"```ansi\nUser : \033[36m{h.name}\033[0m\nID : \033[33m{sp}\033[0m```", inline=False)
+        embed.add_field(name=f"Gllen의",value=f"```fix\n{len(premium)}번째 프리미엄 소유자입니다.```", inline=False)
         if ctx.author.avatar!=None:
-            embed.set_footer(icon_url=ctx.author.avatar, text='{} (봇 소유자)'.format(ctx.author))
+            embed.set_footer(icon_url=ctx.author.avatar, text='{} (Bot Developer)'.format(ctx.author))
         else:
-            embed.set_footer(text='{} (봇 소유자)'.format(ctx.author))
+            embed.set_footer(text='{} (Bot Developer)'.format(ctx.author))
         await ctx.respond(embed=embed)
         return
     if int(ctx.author.id) in premium:
@@ -215,9 +216,8 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
         if code in banword:
             embed = discord.Embed(title='Code Compiling')
             embed.add_field(name='📥 Input', value=f'```py\n{code}```', inline=False)
-            embed.add_field(name = '📤 Output', value = f'`{cmd}`에는 jsk에서 사용 금지된 단어가 포함되어 있습니다.')
+            embed.add_field(name = '📤 Output', value = f'jsk에서 사용 금지된 단어가 포함되어 있습니다.')
             await msg.edit_original_message(embed=embed)
-            await ctx.respond(f'"{code}"는 사용 금지된 단어가 포함되어 있습니다.',ephemeral=True)
             return None
         else:
             try:
@@ -245,7 +245,10 @@ async def jsk(ctx, code: discord.commands.Option(str, "code 입력")):
                 embed=await check_em(ctx,embed)
                 await msg.edit_original_message(embed = embed)
             except Exception as e:
-                await msg.edit_original_message(embed = None, content = f"실행 중 오류가 발생하였습니다.\n\n```py\n{e}```")
+                embed = discord.Embed(title='Code Compiling Exception')
+                embed.add_field(name='📥 Input', value=f'```py\n{code}```', inline=False)
+                embed.add_field(name = '📤 Output', value = f'{e}')
+                await msg.edit_original_message(embed=embed)
     else:
         await ctx.respond("프리미엄이 아닙니다.",ephemeral=True)
 
@@ -330,7 +333,7 @@ async def on_message(ctx):
             return
 
     if ctx.content.startswith("ㄱ "):
-        eng="gpt-3.5-turbo" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest)
+        eng="gpt-3.5-turbo" #text-davinci-003(powerful) #text-curie-001 #text-babbage-001(lower) #text-ada-001(lowest) #gpt-3.5-turbo(Gpt3.5)
         embed=discord.Embed(title="<a:loading:1076164295898959982>ChatGPT AI<a:loading:1076164295898959982>", description="ChatGPT가 생각하는 중입니다...", colour=discord.Colour.green())
         embed.add_field(name="<a:blob_1:1076168747720650762> `Input` <a:blob_1:1076168747720650762>", value=f"```fix\n{ctx.content[2:]}```", inline=False)
         embed.add_field(name="<a:blob_2:1076168750576963655> `Engine` <a:blob_2:1076168750576963655>", value="{} (ChatGPT 3.5)".format(eng), inline=False)
@@ -351,7 +354,7 @@ async def on_message(ctx):
             await msg.edit(embed=None,content="```\n>>> {}\n{}```".format(ctx.content[2:],resp))
         except Exception as e:
             embed=discord.Embed(title="<a:error:1076170456740143135> ChatGPT AI : Error <a:error:1076170456740143135>", description="시간 초과 또는 다른 오류입니다. 다시 질문해주세요!", colour=discord.Colour.red())
-            embed.add_field(name="Debug Message", value=f"```py\n{e}````", inline=False)
+            embed.add_field(name="Debug Message", value=f"```py\n{e}```", inline=False)
             await msg.edit(embed=embed)
 
 
