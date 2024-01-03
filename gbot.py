@@ -16,15 +16,21 @@ for i in premium_ALL:
     premium_ID.append(i[0])
     premium_Grade.append(i[1])
 
+con1 = sqlite3.connect('./chatlog.db')
+cur1 = con1.cursor()
+# cur1.execute("CREATE TABLE Log(Time text, Guild text, Channel text, ID text, Chat text)")
 
 print(premium_ID)
 print(premium_Grade)
 
+# cur.execute("CREATE TABLE Premium(ID text, Grade text)")
+# con.commit()
+# con.close()
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents,command_prefix="*")
-token = ""
+token = "ODAzMTc2Mzc2MjQwNzAxNDYw.GOwDsz._S8QA8T9yj77Rpq-myHf35RCqPDxxjGoMe3Z3Y"
 
 
 async def bt(games):
@@ -51,7 +57,8 @@ async def check_em(ctx,embed):
         return embed
 
 async def restart():
-    global con,cur 
+    global con,cur,con1,cur1
+    con1.close()
     try:
         await bot.close()
     except:
@@ -59,13 +66,17 @@ async def restart():
     time.sleep(5)
     os.system('python gbot_5.py')
 
+async def off():
+    con1.close()
+    await bot.close()
+
 @bot.event
 async def on_ready():
     os.system('echo \033[32mBot Online\033[0m')
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bt(['Gbot ver.3.1.7 Gllen', 'Code Remake, Refactoring', "SQL Update"])
+    await bt(['Gbot ver.3.1.7 Gllen', 'Code Remake, Refactoring', "SQL Update", "24h Server"])
 
 
 @bot.slash_command(description="관리자 전용 기능")
@@ -79,6 +90,13 @@ async def command(ctx, prompt: discord.commands.Option(str, "command")):
         embed = discord.Embed(title="Bot: Rebooting...", color=discord.Colour.red())
         await ctx.respond(embed=embed)
         await restart()
+        await bot.close()
+        return
+    
+    if prompt == "off":
+        embed = discord.Embed(title="Bot: Logout", color=discord.Colour.red())
+        await ctx.respond(embed=embed)
+        await off()
         return
 
     if prompt[0:4] == "pre+" or prompt[0:4] =="Pre+":
@@ -217,5 +235,19 @@ async def 삭제(ctx, 수 : discord.commands.Option(int, "삭제할 메세지 �
     embed = discord.Embed(title="Message Deleting: Deleted", description="Deleted message : {}개".format(num))
     embed=await check_em(ctx,embed)
     await ctx.respond(embed=embed)
+
+
+@bot.slash_command(description="Gllen Status")
+async def status(ctx):
+    pong=str(round(bot.latency*1000))
+    embed = discord.Embed(title="Gllen Status")
+    embed.add_field(
+        name=f"Bot Information",
+        value=f"```ansi\nClient : \033[36m{bot.user.name}#{bot.user.discriminator}\033[0m\nPing : \033[33m{pong + 'ms'}\033[0m\nCPU Usage : \033[36m{psutil.cpu_percent()}%\033[0m\nMemory Usage : \033[33m{psutil.virtual_memory().percent}%\033[0m```",
+        inline=False
+        )
+    embed=await check_em(ctx,embed)
+    await ctx.respond(embed=embed)
+
 
 bot.run(token)
