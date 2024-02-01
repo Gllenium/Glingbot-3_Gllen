@@ -51,13 +51,18 @@ async def check_em(ctx,embed):
         return embed
 
 async def restart():
-    global con,cur 
+    global con,cur,con1,cur1
+    con1.close()
     try:
         await bot.close()
     except:
         pass
     time.sleep(5)
-    os.system('python gbot_5.py')
+    os.system('python3 gbot.py')
+
+async def off():
+    con1.close()
+    await bot.close()
 
 @bot.event
 async def on_ready():
@@ -65,7 +70,7 @@ async def on_ready():
     os.system('echo \033[34m{}\033[0m'.format(bot.user.name))
     os.system('echo \033[34m{}\033[0m'.format(bot.user.id))
     os.system('echo \033[35m================\033[0m')
-    await bt(['Gbot ver.3.1.7 Gllen', 'Code Remake, Refactoring', "SQL Update"])
+    await bt(['Gbot ver.3.1.8 Gllen', 'Code Remake, Refactoring', "SQL Update", "24h Server"])
 
 
 @bot.slash_command(description="관리자 전용 기능")
@@ -79,6 +84,13 @@ async def command(ctx, prompt: discord.commands.Option(str, "command")):
         embed = discord.Embed(title="Bot: Rebooting...", color=discord.Colour.red())
         await ctx.respond(embed=embed)
         await restart()
+        await bot.close()
+        return
+    
+    if prompt == "off":
+        embed = discord.Embed(title="Bot: Logout", color=discord.Colour.red())
+        await ctx.respond(embed=embed)
+        await off()
         return
 
     if prompt[0:4] == "pre+" or prompt[0:4] =="Pre+":
@@ -218,4 +230,31 @@ async def 삭제(ctx, 수 : discord.commands.Option(int, "삭제할 메세지 �
     embed=await check_em(ctx,embed)
     await ctx.respond(embed=embed)
 
+@bot.slash_command(description="Gllen Status")
+async def status(ctx):
+    pong=str(round(bot.latency*1000))
+    embed = discord.Embed(title="Gllen Status")
+    embed.add_field(
+        name=f"Bot Information",
+        value=f"```ansi\nClient : \033[36m{bot.user.name}#{bot.user.discriminator}\033[0m\nPing : \033[33m{pong + 'ms'}\033[0m\nCPU Usage : \033[36m{psutil.cpu_percent()}%\033[0m\nMemory Usage : \033[33m{psutil.virtual_memory().percent}%\033[0m```",
+        inline=False
+        )
+    embed=await check_em(ctx,embed)
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name="시즌", description="잠깐만 사용할 이터널리턴 시즌 조회")
+async def season(ctx):
+    headers = {'x-api-key': 'AGTDWidtsB53qnAYDTV9p4BCGMTBYzPh8YunGuxt'}
+    url = (f"https://open-api.bser.io/v2/data/Season")
+    response = requests.get(url, headers= headers)
+    jj=eval(response.content.decode("utf-8"))
+    embed = discord.Embed(title="Season List", description="이터널 리턴 시즌 리스트\n일반적인 공개보다 1주정도 먼저 업데이트됨")
+    for i in range(len(jj['data'])):
+        if int(jj['data'][i]['seasonID'])>=18:
+            embed.add_field(name=f"ID: {jj['data'][i]['seasonID']} ㅣ (정규){jj['data'][i]['seasonName'][:-2]} {int(jj['data'][i]['seasonName'][-2:])-9}",value=f"{jj['data'][i]['seasonStart']} ~ {jj['data'][i]['seasonEnd']}",inline=False)
+        else:
+            embed.add_field(name=f"ID: {jj['data'][i]['seasonID']} ㅣ {jj['data'][i]['seasonName']}",value=f"{jj['data'][i]['seasonStart']} ~ {jj['data'][i]['seasonEnd']}")
+    await ctx.respond(embed=embed)
+
 bot.run(token)
+
